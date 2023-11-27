@@ -2,23 +2,23 @@
 ### Barbara Verhaar - b.j.verhaar@amsterdamumc.nl
 
 ## Libraries
-packages <- c("rio", "haven", "dplyr", "tableone", "tidyverse", "kableExtra", 
-              "naniar", "ggpubr", "ggsci", "gridExtra", "clipr")
-pacman::p_load(packages, character.only = TRUE)
+library(haven)
+library(rio)
+library(tidyverse)
 
 ## Open datasets
-dataDir <- 'data' 
-infomet <- rio::import(file.path(dataDir,'Info_plasma_metabolites_b.xlsx'))
-metabolites <- rio::import(file.path(dataDir,'HELIUS_EDTA_plasma_metabolites.xlsx'))
-infoumet <- rio::import(file.path(dataDir,'Info_urine_metabolites.xlsx'))
-urinemet <- rio::import(file.path(dataDir,'HELIUS_Urine_metabolites.xlsx'))
-heliusData <- read_sav(file.path(dataDir, "201104_HELIUS data Barbara Verhaar.sav"))
+heliusData <- read_sav('data/201104_HELIUS data Barbara Verhaar.sav')
+metabolites <- rio::import('data/HELIUS_EDTA_plasma_metabolites.xlsx')
+urinemet <- rio::import('data/HELIUS_Urine_metabolites.xlsx')
+
+infomet <- rio::import('data/Info_plasma_metabolites_b.xlsx')
+infoumet <- rio::import('data/Info_urine_metabolites.xlsx')
 
 ## Data cleaning
 colnames(heliusData)
 str(heliusData$H1_Lab_UitslagMIAL)
 helius <- heliusData %>% 
-    select(Heliusnr, Age=H1_lft, Sex=H1_geslacht, Ethnicity=H1_EtnTotaal, 
+    select(ID=Heliusnr, Age=H1_lft, Sex=H1_geslacht, Ethnicity=H1_EtnTotaal, 
            Smoking=H1_Roken, BMI=H1_LO_BMI, WHR=H1_LO_WHR, SBP=H1_LO_GemBPSysZit, 
            DBP=H1_LO_GemBPDiaZit, HT=H1_HT_SelfBPMed, DM=H1_Diabetes_SelfGlucMed,
            DMMed=H1_Diabetesmiddelen, Claudicatio=H1_CI_Rose, PossInf=H1_possINF_Rose, 
@@ -29,6 +29,7 @@ helius <- heliusData %>%
            ACR_KDIGO=H1_ACR_KDIGO, Microalb=H1_Microalbuminurie, 
            HbA1C=H1_Lab_UitslagIH1C, Kreat=H1_Lab_UitslagKREA_HP, Alb=H1_Lab_UitslagMIAL) %>% 
     mutate(
+        ID = paste0('S', ID),
         group = case_when(
             ACR_KDIGO==1 ~ 'Controls',
             DM==1 & ACR_KDIGO==2 ~ 'CKD+T2DM',
@@ -37,10 +38,10 @@ helius <- heliusData %>%
         group = factor(group, levels = c('Controls', 'CKD+T2DM', 'CKD-T2DM')),
         CKD_group = case_when(
             group =='Controls' ~ 'Controls',
-            group == 'CKD+T2DM' ~ 'CKD',
+            group == 'CKD+T2DM' ~ 'DKD',
             group == 'CKD-T2DM' ~ 'CKD'
         ),
-        CKD_group = factor(CKD_group, levels = c('Controls', 'CKD')),
+        CKD_group = factor(CKD_group, levels = c('Controls', 'CKD', 'DKD')),
         Sex = as_factor(Sex, levels = c("labels"), ordered = FALSE),
         Sex = fct_recode(Sex, "Male" = "man", "Female" = "vrouw"),
         Ethnicity = as_factor(Ethnicity, levels = c("labels"), ordered = FALSE),
@@ -66,7 +67,7 @@ helius <- heliusData %>%
         Age_cat = ifelse(Age<=50, "Young", "Old"),
         BMI_cat = ifelse(BMI<25, "BMI<25", "BMI>=25")
     ) %>% 
-    mutate_if(is.numeric, as.numeric) %>% # strange thing to do - reason is the spss source file
+    mutate_if(is.numeric, as.numeric) %>% # to make spss numerics, numerics again (strange thing to do)
     droplevels()
 
 dim(helius)
@@ -74,39 +75,46 @@ colnames(helius)
 helius %>% group_by(CKD_group) %>% 
     summarise(mean(Alb))
 
-saveRDS(helius, "data/heliusdf.RDS")
+helius_ckd <- helius %>% filter(DM == "No diabetes") %>% droplevels(.)
 
+helius_dkd <- helius %>% filter(!(DM == "No diabetes" & CKD_group == "CKD")) %>% 
+    mutate(CKD_group = fct_recode(CKD_group, "DKD" = "CKD")) %>% 
+    droplevels(.)
+dim(helius_dkd)
+table(helius_dkd$CKD_group)
+
+## Save datasets
+saveRDS(helius, "data/helius_complete.RDS")
+saveRDS(helius_ckd, "data/helius_ckd.RDS")
+saveRDS(helius_dkd, "data/helius_dkd.RDS")
+
+## Save ML set with CKD-group and ID
+table(helius_ckd$CKD_group) ## 200 controls, 124 CKD
+ckd <- helius_ckd %>% select(ID, CKD_group) %>% 
+    mutate(CKD = ifelse(CKD_group=="CKD", 1, 0)) 
+table(ckd$CKD) ## 200 controls and 124 CKD
+head(ckd)
+saveRDS(ckd, 'data/helius_ckd_xgb.RDS')
+
+## Create dataset metabolites without xenometabolites
 infomet <- infomet %>% select(met=BIOCHEMICAL, sup=`SUPER PATHWAY`, sub=`SUB PATHWAY`)
-saveRDS(infomet, "data/infomet.RDS")
+noxeno <- infomet$met[which(infomet$sup!='Xenobiotics')]
+saveRDS(noxeno, "data/infomet.RDS")
 
 u_infomet <- infoumet %>% select(met=BIOCHEMICAL, sup=`SUPER PATHWAY`, sub=`SUB PATHWAY`)
-saveRDS(u_infomet, "data/infomet_urine.RDS")
-
-noxeno <- infomet$met[which(infomet$sup!='Xenobiotics')]
-mets <- metabolites[which(metabolites$Metabolite %in% noxeno),]
-
 u_noxeno <- u_infomet$met[which(u_infomet$sup!='Xenobiotics')]
-u_mets <- umetabolites[which(umetabolites$Metabolite %in% u_noxeno),]
+saveRDS(u_noxeno, "data/infomet_urine.RDS")
 
-summary(mets$Metabolite %in% u_mets$Metabolite)
+mets <- metabolites[which(metabolites$Metabolite %in% noxeno),]
+colnames(mets)[2:ncol(mets)] <- paste0('S', colnames(mets)[2:ncol(mets)]) # add letter to ID, safety reasons
+rownames(mets) <- mets$Metabolite
+mets$Metabolite <- NULL
+saveRDS(t(mets), "data/plasma_metabolites.RDS")
 
-## Save RDS with CKD-group and ID
-table(helius$CKD_group) ## 200 controls and 169 CKD
-ckd <- helius %>% select(ID=Heliusnr, CKD_group, DM) %>% 
-    mutate(CKD = ifelse(CKD_group=="CKD", 1, 0),
-           DM = ifelse(DM=="Diabetes", 1, 0)) %>% 
-    select(ID, CKD, DM)
-table(ckd$CKD) ## 200 controls and 169 CKD
-table(ckd$DM) ## 324 controls and 45 DM
-head(ckd)
-saveRDS(ckd, 'data/helius_ckd.RDS')
+u_mets <- urinemet[which(urinemet$Metabolite %in% u_noxeno),]
+colnames(u_mets)[2:ncol(u_mets)] <- paste0('S', colnames(u_mets)[2:ncol(u_mets)]) # add letter to ID, safety reasons
+rownames(u_mets) <- u_mets$Metabolite
+u_mets$Metabolite <- NULL 
+saveRDS(t(u_mets), "data/urine_metabolites.RDS")
 
-## Save RDS CKD- vs CKD-T2DM
-table(helius$group) ## 200 - 45 - 124
-levels(helius$group)
-ckddm <- helius %>% select(ID=Heliusnr, group) %>% 
-    filter(group!="Controls") %>% 
-    mutate(group = ifelse(group=="CKD+T2DM", 1, 0))
-table(ckddm$group) ## 124 vs 45
-head(ckddm)
-saveRDS(ckddm, 'data/helius_ckddm.RDS')
+summary(rownames(mets) %in% rownames(u_mets)) # overlap urine and plasma metabolites 422 of 722
