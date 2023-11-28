@@ -1,4 +1,4 @@
-## Create XGB input files for (non-diabetic) CKD vs control models
+## Create XGB input files for (non-diabetic) CKD vs control model plasma
 ## Barbara Verhaar, b.j.verhaar@amsterdamumc.nl
 
 ## Libraries
@@ -17,7 +17,7 @@ write_y <- function(x, name_y, data_path){
     cat('\nThere are missing values in the outcome data!\n')
   }
   data_path <- file.path(data_path, 'input_data')
-  if(exists(data_path)) dir.create(data_path)
+  if(!exists(data_path)) dir.create(data_path)
   write.table(x, file = file.path(data_path, name_y), row.names = F, col.names = F, sep = '\t', quote = F)
 }
 
@@ -27,7 +27,7 @@ write_data <- function(x, data_path){
     cat('There are missing values in the input data!\n')
   }
   data_path <- file.path(data_path, 'input_data')
-  if(exists(path)) dir.create(data_path)
+  if(!exists(path)) dir.create(data_path)
   write.table(x, file.path(data_path, 'X_data.txt'), row.names = F, col.names = F, sep = '\t', quote = F)
   write.table(colnames(x), file.path(data_path,'feat_ids.txt'), row.names = F, col.names = F, sep = '\t', quote = F)
   write.table(rownames(x), file.path(data_path,'subject_ids.txt'), row.names = F, col.names = F, sep = '\t', quote = F)
@@ -45,8 +45,8 @@ df$ID
 all(df$ID == rownames(pmet)) # TRUE
 
 ## Make input data for classification model using functions
-path <- 'CKD'
-if(exists(path)) dir.create(path)
+path <- 'CKD_plasma'
+if(!exists(path)) dir.create(path)
 write_data(pmet, path)
 y <- as.data.frame(df$CKD)
 y
