@@ -109,12 +109,18 @@ mets <- metabolites[which(metabolites$Metabolite %in% noxeno),]
 colnames(mets)[2:ncol(mets)] <- paste0('S', colnames(mets)[2:ncol(mets)]) # add letter to ID, safety reasons
 rownames(mets) <- mets$Metabolite
 mets$Metabolite <- NULL
-saveRDS(t(mets), "data/plasma_metabolites.RDS")
+mets <- t(mets)
+saveRDS(mets, "data/plasma_metabolites.RDS")
 
 u_mets <- urinemet[which(urinemet$Metabolite %in% u_noxeno),]
 colnames(u_mets)[2:ncol(u_mets)] <- paste0('S', colnames(u_mets)[2:ncol(u_mets)]) # add letter to ID, safety reasons
 rownames(u_mets) <- u_mets$Metabolite
 u_mets$Metabolite <- NULL 
-saveRDS(t(u_mets), "data/urine_metabolites.RDS")
+u_mets <- t(u_mets)
+saveRDS(u_mets, "data/urine_metabolites.RDS")
 
 summary(rownames(mets) %in% rownames(u_mets)) # overlap urine and plasma metabolites 422 of 722
+
+u_mets_kreat <- u_mets / u_mets[,'creatinine']
+all(u_mets[,1] / u_mets[,'creatinine'] == u_mets_kreat[,1])
+saveRDS(u_mets, "data/urine_metabolites_kreat.RDS")
