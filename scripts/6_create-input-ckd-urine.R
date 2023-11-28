@@ -35,7 +35,7 @@ write_data <- function(x, data_path){
 
 
 ## Open datasets
-umet <- readRDS("data/urine_metabolites.RDS") # plasma metabolites
+umet <- readRDS("data/urine_metabolites_kreat.RDS") # urine metabolites adjusted for kreatinine
 df <- readRDS('data/helius_ckd_xgb.RDS') # IDs and CKD yes/no
 umet <- umet[which(rownames(umet) %in% df$ID),] # filter out DKD
 
@@ -45,7 +45,7 @@ df$ID
 all(df$ID == rownames(umet)) # TRUE
 
 ## Make input data for classification model using functions
-path <- 'CKD_urine'
+path <- 'CKD_urine_kreat'
 if(!exists(path)) dir.create(path)
 write_data(umet, path)
 y <- as.data.frame(df$CKD)

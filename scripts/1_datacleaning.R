@@ -124,3 +124,4 @@ summary(rownames(mets) %in% rownames(u_mets)) # overlap urine and plasma metabol
 u_mets_kreat <- u_mets / u_mets[,'creatinine']
 all(u_mets[,1] / u_mets[,'creatinine'] == u_mets_kreat[,1])
 saveRDS(u_mets, "data/urine_metabolites_kreat.RDS")
+
