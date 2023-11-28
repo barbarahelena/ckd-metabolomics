@@ -1,4 +1,3 @@
-#!/Users/barbaraverhaar/miniconda3/envs/xgb/bin/python
 __version__ = "0.3.0"
 import os
 import sys
