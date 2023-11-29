@@ -460,6 +460,7 @@ def main(args):
                 objective="reg:squarederror",
                 tree_method="auto",
                 eval_metric="rmse",
+                # eval_set here?
                 early_stopping_rounds=early_stopping_rounds,
             )
             skf = KFold(n_splits=CV_fold)

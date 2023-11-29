@@ -51,3 +51,4 @@ write_data(umet, path)
 y <- as.data.frame(df$CKD)
 y
 write_y(y, name_y = 'y_binary.txt', path)
+

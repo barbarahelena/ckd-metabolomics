@@ -11,12 +11,14 @@ python /projects/0/prjs0784/ckd-metabolomics/scripts/xgboost/XGBeast.py \
     -x class \
     -n 200 \
     -rand_seed 1234 \
+    -t 24 \
     -param /projects/0/prjs0784/ckd-metabolomics/scripts/xgboost/param_medium.json
-python /shprojects/0/prjs0784/ckd-metabolomics/scripts/xgboost/XGBeast.py \
+python /projects/0/prjs0784/ckd-metabolomics/scripts/xgboost/XGBeast.py \
     -name nonD_CKD_urine \
     -path /projects/0/prjs0784/ckd-metabolomics/CKD_urine \
     -x class \
     -n 200 \
     -rand_seed 1234 \
+    -t 24 \
     -permute \
     -param /projects/0/prjs0784/ckd-metabolomics/scripts/xgboost/param_medium.json
