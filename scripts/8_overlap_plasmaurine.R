@@ -1,75 +1,124 @@
-## Linear models
-## Barbara Verhaar, b.j.verhaar@amsterdamumc.nl
+## Overlap best predictors plasma / urine
 
-## Libraries
 packages <- c("rio", "haven", "dplyr", "tidyverse", "corrr", "corrplot", "Hmisc", "igraph", 
               "ggraph", "network", "naniar", "ggpubr", "ggsci", "gridExtra",
-              "RColorBrewer", "plotly")
+              "RColorBrewer")
 pacman::p_load(packages, character.only = TRUE)
 
-splitgroup <- function(df, infodf, cat){
-    group <- infodf %>% filter(sup == cat) %>% select(metabolite)
-    df <- df %>% select(any_of(group$metabolite))
+overlap <- function(best_pl, best_u, modelname){
+    theme_Publication <- function(base_size=12, base_family="sans") {
+        library(grid)
+        library(ggthemes)
+        (theme_foundation(base_size=base_size, base_family=base_family)
+            + theme(plot.title = element_text(face = "bold", family = 'Helvetica',
+                                              size = rel(1.0), hjust = 0.5),
+                    text = element_text(family = 'Helvetica'),
+                    panel.background = element_rect(colour = NA),
+                    plot.background = element_rect(colour = NA),
+                    panel.border = element_rect(colour = NA),
+                    axis.title = element_text(face = "bold",size = rel(1)),
+                    axis.title.y = element_text(angle=90,vjust =2),
+                    axis.title.x = element_text(vjust = -0.2),
+                    axis.text = element_text(), 
+                    axis.line.x = element_line(colour="black"),
+                    axis.ticks.y = element_blank(), axis.line.y = element_blank(), 
+                    axis.ticks = element_line(),
+                    panel.grid.major = element_line(colour="#f0f0f0"),
+                    panel.grid.minor = element_blank(),
+                    legend.key = element_rect(colour = NA),
+                    legend.position = "bottom",
+                    # legend.direction = "horizontal",
+                    legend.key.size= unit(0.2, "cm"),
+                    legend.spacing  = unit(0, "cm"),
+                    # legend.title = element_text(face="italic"),
+                    plot.margin=unit(c(10,5,5,5),"mm"),
+                    strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+                    strip.text = element_text(face="bold")
+            ))
+        
+    } 
+    pl1 <- best_pl %>% 
+        select(Metabolite=FeatName, RelFeatImp) %>% 
+        arrange(-RelFeatImp) %>% 
+        slice(1:100)
+    
+    u1 <- best_u %>% 
+        select(Metabolite=FeatName, RelFeatImp) %>% 
+        arrange(-RelFeatImp) %>% 
+        slice(1:100)
+    
+    pl2 <- best_pl %>% 
+        select(Metabolite=FeatName, RelFeatImp) %>% 
+        arrange(-RelFeatImp) %>% 
+        slice(1:20)
+    
+    u2 <- best_u %>% 
+        select(Metabolite=FeatName, RelFeatImp) %>% 
+        arrange(-RelFeatImp) %>% 
+        slice(1:20)
+    
+    plu <- inner_join(pl1, u1, by = "Metabolite", suffix = c("Plasma", "Urine")) %>% 
+        arrange(-RelFeatImpPlasma)
+    colnames(plu) <- c("Metabolite", "Plasma", "Urine")
+    plu2 <- pivot_longer(plu, cols = 2:3)
+    
+    plot <- ggplot(plu2, aes(x = fct_reorder(Metabolite, value), y = value, fill = name)) + 
+        theme_Publication() +
+        geom_bar(data=subset(plu2, name == "Plasma"), aes(y = value*-1), stat = "identity", alpha = 0.8) + 
+        geom_bar(data=subset(plu2, name == "Urine"), stat = "identity", alpha = 0.8) + 
+        scale_y_continuous(limits = c(-100, 100), breaks=seq(-100,100,20),labels=abs(seq(-100,100,20))) + 
+        coord_flip() + 
+        scale_fill_manual(values = rev(pal_lancet()(2))) + 
+        labs(title = "Overlapping best predictors (top 100)", x="",
+             y="Relative importance (%)" ) +
+        theme(legend.title = element_blank())
+    ggsave(str_c('results/overlap100_', modelname ,'.pdf'), height = 7, width = 10)
+    
+    u2$unique <- ifelse(u2$Metabolite %in% pl1$Metabolite, "in both models", "only in this model")
+    pl2$unique <- ifelse(pl2$Metabolite %in% u1$Metabolite, "in both models", "only in this model")
+    pl2$unique <- as.factor(pl2$unique)
+    u2$unique <- as.factor(u2$unique)
+    
+    plot1 <-  ggplot(data=u2, aes(y=RelFeatImp, x=fct_reorder(Metabolite, RelFeatImp), fill=unique)) +
+        scale_fill_manual(values = c("in both models"=pal_lancet()(2)[1], "only in this model"="gray")) +
+        theme_Publication()+
+        geom_bar(stat="identity", alpha = 0.8)+
+        coord_flip() +
+        labs(title="Urine", y="Relative Importance (%)", x="", caption = "") +
+        theme(legend.title = element_blank(),
+              legend.position = "right")
+    
+    plot2 <-  ggplot(data=pl2, aes(y=RelFeatImp, x=fct_reorder(Metabolite, RelFeatImp), fill=unique)) +
+        scale_fill_manual(values = c("in both models"=pal_lancet()(2)[2], "only in this model"="gray")) +
+        theme_Publication()+
+        geom_bar(stat="identity", alpha = 0.8)+
+        coord_flip() +
+        labs(title="Plasma", y="Relative Importance (%)", x="", caption = "") +
+        theme(legend.title = element_blank(),
+              legend.position = "right")
+    
+    p <- ggarrange(plot, ggarrange(plot1, plot2, nrow = 2, labels = c("B", "C")),
+                   ncol = 2, labels = "A")
+    annotate_figure(p, bottom = text_grob("Figure B and C show the top 20 predictors; these are marked as \"in both models\" 
+    if this predictor appears in the top 100 predictors of the other category (plasma or urine)",
+                                          hjust = 1, x=1, face = "italic", size = 10))
+    ggsave(str_c('results/overlap_', modelname,'.pdf'), width=18, height=8.5)
 }
 
-## Opening data
-helius <- readRDS("data/heliusdf.RDS")
-summary <- rio::import('data/Info_plasma_metabolites_b.xlsx')
-infomet <- summary %>% select(metabolite=BIOCHEMICAL, sup=`SUPER PATHWAY`, sub=`SUB PATHWAY`)
-infomet$sup <- as.factor(infomet$sup)
-plasmamet <- rio::import('data/HELIUS_EDTA_plasma_metabolites.xlsx')
-urinemet <- rio::import('data/HELIUS_urine_metabolites.csv')
-rownames(plasmamet) <- plasmamet$Metabolite
-plasmamet$Metabolite <- NULL
-plasmamet2 <- as.data.frame(t(as.matrix(plasmamet)))
 
-rownames(urinemet) <- urinemet$Heliusnr
-urinemet[,1:5] <- NULL
+## CKD vs HC 
+best_pl <- rio::import('Plasma/CKD/output_XGB_class_CKD_2020_12_18__22-07-15/feature_importance.txt')
+best_u <- rio::import('Urine/CKD/output_XGB_class_UrineCKD_2021_01_11__14-46-07/feature_importance.txt')
+overlap(best_pl, best_u, "CKDvsHC")
 
-u_sel <- urinemet[,which(names(urinemet) %in% names(plasmamet2))]
-u_sel <- u_sel %>% rownames_to_column() %>% 
-    mutate_at(c(1:557),as.numeric) %>% 
-    column_to_rownames()
-u_sel <- u_sel[order(row.names(u_sel)),]
+## CKD-T2DM vs HC 
+best_pl <- rio::import('Plasma/CKD/WithoutDM/output_XGB_class_CKDnoDM_2020_12_19__11-53-08/feature_importance.txt')
+best_u <- rio::import('Urine/CKD/WithoutDM/output_XGB_class_UrineCKDsens_2021_01_11__22-53-32/feature_importance.txt')
+overlap(best_pl, best_u, "CKD-T2DMvsHC")
 
-p_sel <- plasmamet2[,which(names(plasmamet2) %in% names(urinemet))]
-p_sel <- p_sel %>% filter(rownames(.) %in% rownames(u_sel)) %>% rownames_to_column() %>% 
-    mutate_all(as.numeric) %>% 
-    column_to_rownames()
-p_sel <- p_sel[order(row.names(p_sel)),]
-
-p <- lapply(levels(infomet$sup), splitgroup, df=p_sel, infodf=infomet)
-names(p) <- levels(infomet$sup)
-
-u <- lapply(levels(infomet$sup), splitgroup, df=u_sel, infodf=infomet)
-names(u) <- levels(infomet$sup)
-
-## Correlation principal components
-noxeno <- infomet$met[which(infomet$sup!='Xenobiotics')]
-pmat <- as.matrix(p_sel[,which(colnames(p_sel) %in% noxeno)])
-ppca <- prcomp(pmat, center = T)
-psum <- summary(ppca)
-df1 <- as.data.frame(psum$x)[,1:5]
-colnames(df1) <- str_c("P_", colnames(df1))
-
-umat <- as.matrix(u_sel[,which(colnames(u_sel) %in% noxeno)])
-upca <- prcomp(umat, center = T)
-usum <- summary(upca)
-df2 <- as.data.frame(usum$x)[,1:5]
-colnames(df2) <- str_c("U_", colnames(df2))
-
-df <- merge(df1, df2, by="row.names")
-df$Row.names <- NULL
-
-## Corrplot
-cor <- cor(df1, df2, method="spearman")
-corrplot(cor,  type = "upper", tl.col = "black",
-         order = "original", tl.srt = 45, insig="blank", sig.level = 0.05, 
-         #p.mat=cor$P,
-         method="color", mar=c(0,0,1,0), addCoef.col = "black", diag = T, 
-         addgrid.col = "grey")
-
-
-
+## CKD+T2DM vs CKD-T2DM
+best_pl <- rio::import('Plasma/CKDDM/output_XGB_class_CKDDM_2020_12_19__13-54-29/feature_importance.txt')
+best_u <- rio::import('Urine/CKDDM/output_XGB_class_UrineCKDDM_2021_01_12__10-30-18/feature_importance.txt')
+overlap(best_pl, best_u, "CKD+T2DMvsCKD-T2DM")
 
 
