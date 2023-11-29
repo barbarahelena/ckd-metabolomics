@@ -1,4 +1,5 @@
 ## Overlap best predictors plasma / urine
+## Barbara Verhaar, b.j.verhaar@amsterdamumc.nl
 
 packages <- c("rio", "haven", "dplyr", "tidyverse", "corrr", "corrplot", "Hmisc", "igraph", 
               "ggraph", "network", "naniar", "ggpubr", "ggsci", "gridExtra",
@@ -106,19 +107,8 @@ overlap <- function(best_pl, best_u, modelname){
 }
 
 
-## CKD vs HC 
-best_pl <- rio::import('Plasma/CKD/output_XGB_class_CKD_2020_12_18__22-07-15/feature_importance.txt')
-best_u <- rio::import('Urine/CKD/output_XGB_class_UrineCKD_2021_01_11__14-46-07/feature_importance.txt')
+## Non-diabetic CKD vs controls 
+best_pl <- rio::import('CKD_plasma/output_XGB_class_nonD_CKD_plasma_2023_11_28__23-15-43/feature_importance.txt')
+best_u <- rio::import('CKD_urine_kreat/output_XGB_class_nonD_CKD_urinekreat_2023_11_28__23-15-36/feature_importance.txt')
 overlap(best_pl, best_u, "CKDvsHC")
-
-## CKD-T2DM vs HC 
-best_pl <- rio::import('Plasma/CKD/WithoutDM/output_XGB_class_CKDnoDM_2020_12_19__11-53-08/feature_importance.txt')
-best_u <- rio::import('Urine/CKD/WithoutDM/output_XGB_class_UrineCKDsens_2021_01_11__22-53-32/feature_importance.txt')
-overlap(best_pl, best_u, "CKD-T2DMvsHC")
-
-## CKD+T2DM vs CKD-T2DM
-best_pl <- rio::import('Plasma/CKDDM/output_XGB_class_CKDDM_2020_12_19__13-54-29/feature_importance.txt')
-best_u <- rio::import('Urine/CKDDM/output_XGB_class_UrineCKDDM_2021_01_12__10-30-18/feature_importance.txt')
-overlap(best_pl, best_u, "CKD+T2DMvsCKD-T2DM")
-
 
