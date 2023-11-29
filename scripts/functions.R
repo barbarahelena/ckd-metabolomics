@@ -434,7 +434,6 @@ plot_feature_importance_class_urine <- function(path_true, top_n){
            device = 'svg', width = 11, height = 7)
 }
 
-
 ## Functions classification
 
 compared_to_permuted_class <- function(path_true_outcome, path_permuted_outcome){
