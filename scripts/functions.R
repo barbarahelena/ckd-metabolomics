@@ -290,7 +290,7 @@ plot_feature_importance_microbiome <- function(path_true, top_n){
     ggsave(pl, path = path_true, filename = str_c('plot_Feature_Importance_Metabolites.svg'), device = 'svg', width = 8, height = 7)
 }
 
-plot_feature_importance_class_microbiome <- function(path_true, top_n){
+plot_feature_importance_class_plasma <- function(path_true, top_n){
     theme_Publication <- function(base_size=12, base_family="sans") {
         library(grid)
         library(ggthemes)
@@ -325,8 +325,8 @@ plot_feature_importance_class_microbiome <- function(path_true, top_n){
     
     r <- rio::import(file.path(path_true, 'feature_importance.txt'))
     r <- r %>% arrange(-RelFeatImp)
-    a <- rio::import('../../data/Info_plasma_metabolites_b.xlsx')
-    a <- a %>% select(FeatName = BIOCHEMICAL, sup = `SUPER PATHWAY`) %>% 
+    a <- readRDS("data/infomet.RDS")
+    a <- a %>% select(FeatName = met, sup) %>% 
         mutate(sup = as.factor(sup))
     summ <- a %>% 
         group_by(sup) %>% 
@@ -357,9 +357,81 @@ plot_feature_importance_class_microbiome <- function(path_true, top_n){
         theme(legend.position = 'bottom', legend.justification = 'center')
     pl
     ggsave(pl, path = path_true, filename = 'plot_Feature_Importance_Metabolites_color.pdf', 
-            device = 'pdf', width = 10, height = 7)
+            device = 'pdf', width = 11, height = 7)
     ggsave(pl, path = path_true, filename = 'plot_Feature_Importance_Metabolites_color.svg', 
-            device = 'svg', width = 10, height = 7)
+            device = 'svg', width = 11, height = 7)
+}
+
+plot_feature_importance_class_urine <- function(path_true, top_n){
+    theme_Publication <- function(base_size=12, base_family="sans") {
+        library(grid)
+        library(ggthemes)
+        (theme_foundation(base_size=base_size, base_family=base_family)
+            + theme(plot.title = element_text(face = "bold",
+                                              size = rel(1.0), hjust = 0.5,
+                                              family = 'Helvetica'),
+                    text = element_text(family = 'Helvetica'),
+                    panel.background = element_rect(colour = NA),
+                    plot.background = element_rect(colour = NA),
+                    panel.border = element_rect(colour = NA),
+                    axis.title = element_text(face = "bold",size = rel(1)),
+                    axis.title.y = element_text(angle=90,vjust =2),
+                    axis.title.x = element_text(vjust = -0.2),
+                    axis.text = element_text(), 
+                    axis.line.x = element_line(colour="black"),
+                    axis.ticks.x = element_line(),
+                    axis.ticks.y = element_blank(),
+                    panel.grid.major = element_line(colour="#f0f0f0"),
+                    panel.grid.minor = element_blank(),
+                    legend.key = element_rect(colour = NA),
+                    legend.position = "bottom",
+                    # legend.direction = "horizontal",
+                    legend.key.size= unit(0.2, "cm"),
+                    legend.spacing  = unit(0, "cm"),
+                    # legend.title = element_text(face="italic"),
+                    plot.margin=unit(c(10,5,5,5),"mm"),
+                    strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+                    strip.text = element_text(face="bold")
+            ))
+    } 
+    
+    r <- rio::import(file.path(path_true, 'feature_importance.txt'))
+    r <- r %>% arrange(-RelFeatImp)
+    a <- readRDS("data/infomet_urine.RDS")
+    a <- a %>% select(FeatName = met, sup) %>% 
+        mutate(sup = as.factor(sup))
+    summ <- a %>% 
+        group_by(sup) %>% 
+        dplyr::summarise(count=n()) %>% 
+        filter(sup!='Xenobiotics') %>%
+        arrange(desc(count)) %>% 
+        mutate(sup = reorder(sup, count)) %>% 
+        droplevels()
+    ra <- left_join(r, a, by='FeatName')
+    mp <- mean(r$RelFeatImp)
+    ra$Tax <- factor(ra$FeatName, levels = rev(ra$FeatName))
+    ra$sup <- factor(ra$sup, rev(levels(summ$sup)))
+    ra <- ra[1:top_n, ]
+    mp <- mean(ra$RelFeatImp)
+    colpal <- c("Lipid"="#00468BFF", "Amino Acid"="#ED0000FF", "Nucleotide"="#42B540FF",
+                "Cofactors and Vitamins"="#0099B4FF", "Carbohydrate"="#925E9FFF", "Peptide"="#FDAF91FF", "Partially Characterized Molecules"="#AD002AFF", "Energy"="#ADB6B6FF")
+    pl <- ggplot(data=ra, aes(y=RelFeatImp, x=Tax, fill=sup)) + 
+        theme_Publication() +
+        geom_bar(stat="identity", alpha=0.8) +
+        scale_fill_manual(values = colpal)+
+        coord_flip() +
+        labs(y = 'Relative Importance %', x='', 
+             title = 'Metabolite relative importance',
+             fill = '') +
+        theme(axis.text.x = element_text(size=12)) + 
+        theme(axis.text.y = element_text(size=10)) +
+        theme(legend.key.size= unit(0.5, "cm")) +
+        theme(legend.position = 'bottom', legend.justification = 'center')
+    pl
+    ggsave(pl, path = path_true, filename = 'plot_Feature_Importance_Metabolites_color.pdf', 
+           device = 'pdf', width = 11, height = 7)
+    ggsave(pl, path = path_true, filename = 'plot_Feature_Importance_Metabolites_color.svg', 
+           device = 'svg', width = 11, height = 7)
 }
 
 
