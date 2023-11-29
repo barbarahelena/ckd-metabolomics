@@ -99,11 +99,13 @@ saveRDS(ckd, 'data/helius_ckd_xgb.RDS')
 ## Create dataset metabolites without xenometabolites
 infomet <- infomet %>% select(met=BIOCHEMICAL, sup=`SUPER PATHWAY`, sub=`SUB PATHWAY`)
 noxeno <- infomet$met[which(infomet$sup!='Xenobiotics')]
-saveRDS(noxeno, "data/infomet.RDS")
+infomet2 <- infomet[which(infomet$met %in% noxeno),]
+saveRDS(infomet2, "data/infomet.RDS")
 
 u_infomet <- infoumet %>% select(met=BIOCHEMICAL, sup=`SUPER PATHWAY`, sub=`SUB PATHWAY`)
 u_noxeno <- u_infomet$met[which(u_infomet$sup!='Xenobiotics')]
-saveRDS(u_noxeno, "data/infomet_urine.RDS")
+u_infomet2 <- u_infomet[which(u_infomet$met %in% u_noxeno),]
+saveRDS(u_infomet2, "data/infomet_urine.RDS")
 
 mets <- metabolites[which(metabolites$Metabolite %in% noxeno),]
 colnames(mets)[2:ncol(mets)] <- paste0('S', colnames(mets)[2:ncol(mets)]) # add letter to ID, safety reasons
