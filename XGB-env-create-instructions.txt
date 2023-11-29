@@ -1,0 +1,12 @@
+# check if conda is installed (and version)
+
+"conda info"
+
+# install conda env for mac
+
+"conda env create --file xgb_mac_env.yml"
+
+# install conda env for linux
+
+"conda env create --file xgb_linux_env.yml"
+
