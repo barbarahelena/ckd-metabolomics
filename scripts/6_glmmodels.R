@@ -118,8 +118,8 @@ log_group <- function(df, dfname, writetable = FALSE, figure = FALSE){
                 colors <- c(pal_jco()(4)[1], pal_jco()(4)[4])
                 pl <- ggplot(reslong, aes(x=Metabolite,y=est, color=model)) +
                     geom_hline(yintercept = 1, color = "grey40") +
-                    geom_point(position=position_dodge(-0.8)) +
-                    geom_errorbar(aes(ymin=l95,ymax=u95,width=.3), position=position_dodge(-0.8)) +
+                    geom_point(position=position_dodge(-0.5)) +
+                    geom_errorbar(aes(ymin=l95,ymax=u95,width=.3), position=position_dodge(-0.5)) +
                     expand_limits(y=0)+
                     scale_y_log10(n.breaks = 6)+
                     theme_Publication()+
@@ -148,9 +148,7 @@ interactions <- function(df, dfname){
             dfsub$met <- log10(dfsub[,i][[1]])                    
             m0 <- glm(CKD_log ~ scale(met) + scale(met)*Ethnicity, data = dfsub, family = "binomial")
             m1 <- glm(CKD_log ~ scale(met) + Age + Sex + BMI + HT + scale(met)*Ethnicity, data = dfsub, family = "binomial")
-            m2 <- glm(CKD_log ~ scale(met) + Age + Sex + BMI, data=dfsub, family="binomial")
-            m3 <- glm(CKD_log ~ scale(met) + Age + Sex + BMI + HT, data=dfsub, family="binomial")
-            
+
             metname <- colnames(dfsub)[i]
             ia <- tidy(m0, conf.int=T)[6:8,]
             m0 <- tidy(m0, conf.int=T)[6:8,]
