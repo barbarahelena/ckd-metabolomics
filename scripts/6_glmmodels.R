@@ -102,7 +102,13 @@ log_group <- function(df, dfname, writetable = FALSE, figure = FALSE){
                 mutate_at(c(2:17), as.character) %>% 
                 mutate_at(c(2:17), as.numeric) %>% 
                 mutate_at(c(2:4, 6:8, 10:12, 14:16), afronden2) %>% 
-                mutate_at(c(5,9,13,17), afronden5)
+                mutate_at(c(5,9,13,17), afronden5) %>% 
+                mutate(
+                    `m0-q` = p.adjust(`m0-p`, 'fdr'),
+                    `m1-q` = p.adjust(`m1-p`, 'fdr'),
+                    `m2-q` = p.adjust(`m2-p`, 'fdr'),
+                    `m3-q` = p.adjust(`m3-p`, 'fdr')
+                )
             
             ## Output
             if(figure == TRUE){
@@ -127,15 +133,15 @@ log_group <- function(df, dfname, writetable = FALSE, figure = FALSE){
                     expand_limits(y=0)+
                     scale_y_log10(n.breaks = 6)+
                     theme_Publication()+
-                    labs(title = "Logistic regression: highest ranked metabolites", x = "", y = ylab) +
+                    labs(title = "", x = "", y = ylab) +
                     scale_color_manual(values = colors) +
                     coord_flip()
-                ggsave(pl, filename = str_c("results/logreg/", dfname, "_logreg.pdf"), device = "pdf", width = 8)
-                ggsave(pl, filename = str_c("results/logreg/", dfname, "_logreg.svg"), device = "svg", width = 8)
+                ggsave(pl, filename = str_c("results/logreg/CKD/", dfname, "_logreg.pdf"), device = "pdf", width = 8)
+                ggsave(pl, filename = str_c("results/logreg/CKD/", dfname, "_logreg.svg"), device = "svg", width = 8)
             } 
             
             if(writetable == TRUE){
-                openxlsx::write.xlsx(reslog2, file.path("results/logreg", str_c(dfname,"_logreg.xlsx")))
+                openxlsx::write.xlsx(reslog2, file.path("results/logreg/CKD", str_c(dfname,"_logreg.xlsx")))
             }
     }
 }
@@ -176,9 +182,12 @@ interactions <- function(df, dfname){
             mutate_at(c(3:10), as.character) %>% 
             mutate_at(c(3:10), as.numeric) %>% 
             mutate_at(c(3:5, 7:9), afronden2) %>% 
-            mutate_at(c(6,10), afronden5)
-        
-        openxlsx::write.xlsx(reslog2, file.path("results/logreg", str_c(dfname,"_interactions.xlsx")))
+            mutate_at(c(6,10), afronden5) %>% 
+            mutate(
+                `m0-q` = p.adjust(`m0-p`, 'fdr'),
+                `m1-q` = p.adjust(`m1-p`, 'fdr')
+            )
+        openxlsx::write.xlsx(reslog2, file.path("results/logreg/interactions", str_c(dfname,"_interactions.xlsx")))
 }
 
 ## Opening HELIUS file, metabolite data and best predictor files
@@ -194,7 +203,7 @@ best_ckd_urine <- rio::import('CKD_urine_kreat/output_XGB_class_nonD_CKD_urinekr
 pl_ckd <- glm_prep(best_ckd_plasma, plasma_metabolites, helius)
 ur_ckd <- glm_prep(best_ckd_urine, urine_metabolites, helius)
 
-## Logistic regression
+## Logistic regression CKD
 log_group(pl_ckd, "plasma_ckd", writetable = TRUE, figure = TRUE) 
 log_group(ur_ckd, "urine_ckd", writetable = TRUE, figure = TRUE)
 
