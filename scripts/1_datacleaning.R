@@ -24,8 +24,8 @@ helius <- heliusData %>%
            DMMed=H1_Diabetesmiddelen, Claudicatio=H1_CI_Rose, PossInf=H1_possINF_Rose, 
            AP=H1_AP_Rose, CVD=H1_CVD_Rose, AntiHT=H1_Antihypertensiva, 
            MDRD=H1_MDRD_eGFR, CKDEPI=H1_CKDEPI_eGFR, CKDStage=H1_CKDEPI_stage, 
-           MetSyn=H1_MetSyn_MetabolicSyndrome, LDL=H1_Lab_uitslagRLDL, Trig=H1_Lab_UitslagTRIG,
-           FramRisk=H1_Fram_CVD, SCORENL=H1_SCORE_CVDmort_NL,
+           MetSyn=H1_MetSyn_MetabolicSyndrome, LDL=H1_Lab_uitslagRLDL, TC = H1_Lab_UitslagCHOL,
+           Trig=H1_Lab_UitslagTRIG, FramRisk=H1_Fram_CVD, SCORENL=H1_SCORE_CVDmort_NL,
            ACR_KDIGO=H1_ACR_KDIGO, Microalb=H1_Microalbuminurie, 
            HbA1C=H1_Lab_UitslagIH1C, Kreat=H1_Lab_UitslagKREA_HP, Alb=H1_Lab_UitslagMIAL) %>% 
     mutate(
