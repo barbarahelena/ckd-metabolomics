@@ -72,25 +72,17 @@ log_group <- function(df, dfname, writetable = FALSE, figure = FALSE){
                 dfsub$met <- NULL    
                 dfsub$met <- log10(dfsub[,i][[1]])
                 m0 <- glm(CKD_log ~ scale(met), data = dfsub, family = "binomial")
-                m1 <- glm(CKD_log ~ scale(met) + Age + Sex, data = dfsub, family = "binomial")
-                m2 <- glm(CKD_log ~ scale(met) + Age + Sex + BMI, data=dfsub, family="binomial")
-                m3 <- glm(CKD_log ~ scale(met) + Age + Sex + BMI + HT, data=dfsub, family="binomial")
+                m1 <- glm(CKD_log ~ scale(met) + Age + Sex + BMI + HT, data=dfsub, family="binomial")
                 
                 metname <- colnames(dfsub)[i]
                 m0 <- tidy(m0, conf.int=T)[2,]
-                m1 <- tidy(m1, conf.int=T)[2,]
-                m2 <- tidy(m2, conf.int = T)[2,]
-                m3 <- tidy(m3, conf.int = T)[2,]
+                m1 <- tidy(m1, conf.int = T)[2,]
                 
                 resRow <- cbind(metname, exp(m0$estimate), exp(m0$conf.low), exp(m0$conf.high), m0$p.value,
-                                exp(m1$estimate), exp(m1$conf.low), exp(m1$conf.high), m1$p.value,
-                                exp(m2$estimate), exp(m2$conf.low), exp(m2$conf.high), m2$p.value,
-                                exp(m3$estimate), exp(m3$conf.low), exp(m3$conf.high), m3$p.value)
+                                exp(m1$estimate), exp(m1$conf.low), exp(m1$conf.high), m1$p.value)
                 colnames(resRow) <- c("Metabolite", 
                                       "m0-est", "m0-l95", "m0-u95", "m0-p", 
-                                      "m1-est", "m1-l95", "m1-u95", "m1-p",
-                                      "m2-est", "m2-l95", "m2-u95", "m2-p",
-                                      "m3-est", "m3-l95", "m3-u95", "m3-p")
+                                      "m1-est", "m1-l95", "m1-u95", "m1-p")
                 res_log <- rbind(res_log, resRow)
                 dfsub$met <- NULL 
             }
@@ -99,33 +91,31 @@ log_group <- function(df, dfname, writetable = FALSE, figure = FALSE){
             afronden2 <- function(x) return(as.numeric(format(round(x, 2),2)))
             afronden5 <- function(x) return(as.numeric(format(round(x, 5),5)))
             reslog2 <- reslog %>% 
-                mutate_at(c(2:17), as.character) %>% 
-                mutate_at(c(2:17), as.numeric) %>% 
-                mutate_at(c(2:4, 6:8, 10:12, 14:16), afronden2) %>% 
-                mutate_at(c(5,9,13,17), afronden5) %>% 
+                mutate_at(c(2:9), as.character) %>% 
+                mutate_at(c(2:9), as.numeric) %>% 
+                mutate_at(c(2:4, 6:8), afronden2) %>% 
+                mutate_at(c(5,9), afronden5) %>% 
                 mutate(
                     `m0-q` = p.adjust(`m0-p`, 'fdr'),
-                    `m1-q` = p.adjust(`m1-p`, 'fdr'),
-                    `m2-q` = p.adjust(`m2-p`, 'fdr'),
-                    `m3-q` = p.adjust(`m3-p`, 'fdr')
+                    `m1-q` = p.adjust(`m1-p`, 'fdr')
                 )
             
             ## Output
             if(figure == TRUE){
-                labslist <- c("Unadjusted", "Age, Sex", "+BMI", "+Hypertension")
+                labslist <- c("Unadjusted", "Adjusted")
                 reslong <- reslog2 %>% 
-                    pivot_longer(c(2:17), names_to=c("model", "cat"), 
+                    pivot_longer(c(2:9), names_to=c("model", "cat"), 
                                  names_prefix="m", 
                                  names_sep='-',
                                  values_to="value") %>% 
                     pivot_wider(names_from = cat, values_from = value) %>% 
-                    mutate(model = factor(model, levels = c("0", "1", "2", "3"), 
+                    mutate(model = factor(model, levels = c("0", "1"), 
                                           labels = labslist),
                            Metabolite = factor(Metabolite, levels = colnames(dfsub)[8:27]),
                            Metabolite = fct_rev(Metabolite))
                 
                 ylab <- "OR for CKD per log10 increase"
-                colors <- c(pal_jco()(4)[1], pal_jco()(4)[2], pal_jco()(4)[4], pal_jco()(5)[5])
+                colors <- c(pal_jco()(4)[1], pal_jco()(4)[4])
                 pl <- ggplot(reslong, aes(x=Metabolite,y=est, color=model)) +
                     geom_hline(yintercept = 1, color = "grey40") +
                     geom_point(position=position_dodge(-0.8)) +
