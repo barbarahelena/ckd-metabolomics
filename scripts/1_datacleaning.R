@@ -27,7 +27,7 @@ helius <- heliusData %>%
            MetSyn=H1_MetSyn_MetabolicSyndrome, LDL=H1_Lab_uitslagRLDL, TC = H1_Lab_UitslagCHOL,
            Trig=H1_Lab_UitslagTRIG, FramRisk=H1_Fram_CVD, SCORENL=H1_SCORE_CVDmort_NL,
            ACR_KDIGO=H1_ACR_KDIGO, Microalb=H1_Microalbuminurie, 
-           HbA1C=H1_Lab_UitslagIH1C, Kreat=H1_Lab_UitslagKREA_HP, Alb=H1_Lab_UitslagMIAL) %>% 
+           HbA1C=H1_Lab_UitslagIH1C, Kreat=H1_Lab_UitslagKREA_HP, Alb=H1_Lab_uitslagMIKR) %>% 
     mutate(
         ID = paste0('S', ID),
         group = case_when(
