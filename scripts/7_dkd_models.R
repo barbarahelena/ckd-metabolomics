@@ -117,7 +117,7 @@ log_group_dkd <- function(df, dfname, writetable = FALSE, figure = FALSE, plotti
                        Metabolite = factor(Metabolite, levels = colnames(dfsub)[8:27]),
                        Metabolite = fct_rev(Metabolite))
             
-            ylab <- "OR for DKD per log10 increase"
+            ylab <- "OR for DKD per SD increase"
             colors <- c(pal_jco()(4)[1], pal_jco()(4)[4])
             pl <- ggplot(reslong, aes(x=Metabolite,y=est, color=model)) +
                 geom_hline(yintercept = 1, color = "grey40") +

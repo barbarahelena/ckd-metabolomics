@@ -17,6 +17,11 @@ plot_features_tests_class(data_path, path_true, top_n=20, labels)
 plot_features_tests_top(data_path, path_true, top_n=20, nrow=4, labels)
 plot_feature_importance_class_plasma(path_true, top_n=20)
 
+auc <- read_delim(file.path(path_true, "model_results_per_iteration.txt"))
+mean(auc$ROC_AUC_scores)
+mean(auc$ROC_AUC_scores) - 1.96 * (sd(auc$ROC_AUC_scores) / sqrt(100))
+mean(auc$ROC_AUC_scores) + 1.96 * (sd(auc$ROC_AUC_scores) / sqrt(100))
+
 ## Urine metabolites
 path_true <- 'CKD_urine_kreat/output_XGB_class_nonD_CKD_urinekreat_2023_11_28__23-15-36'
 path_permuted <- 'CKD_urine_kreat/output_XGB_class_nonD_CKD_urinekreat_2023_11_29__00-22-34_PERMUTED'
@@ -28,4 +33,9 @@ plot_feature_importance_class(path_true, 20)
 plot_features_tests_class(data_path, path_true, top_n=20, labels)
 plot_features_tests_top(data_path, path_true, top_n=20, nrow=4, labels)
 plot_feature_importance_class_urine(path_true, top_n=20)
+
+auc <- read_delim(file.path(path_true, "model_results_per_iteration.txt"))
+mean(auc$ROC_AUC_scores)
+mean(auc$ROC_AUC_scores) - 1.96 * (sd(auc$ROC_AUC_scores) / sqrt(100))
+mean(auc$ROC_AUC_scores) + 1.96 * (sd(auc$ROC_AUC_scores) / sqrt(100))
 

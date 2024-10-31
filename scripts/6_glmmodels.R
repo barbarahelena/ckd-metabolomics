@@ -114,7 +114,7 @@ log_group <- function(df, dfname, writetable = FALSE, figure = FALSE){
                            Metabolite = factor(Metabolite, levels = colnames(dfsub)[8:27]),
                            Metabolite = fct_rev(Metabolite))
                 
-                ylab <- "OR for CKD per log10 increase"
+                ylab <- "OR for CKD per SD increase"
                 colors <- c(pal_jco()(4)[1], pal_jco()(4)[4])
                 pl <- ggplot(reslong, aes(x=Metabolite,y=est, color=model)) +
                     geom_hline(yintercept = 1, color = "grey40") +
@@ -198,3 +198,4 @@ log_group(ur_ckd, "urine_ckd", writetable = TRUE, figure = TRUE)
 ## Interactions
 interactions(pl_ckd, "plasma_ckd")
 interactions(ur_ckd, "urine_ckd")
+
